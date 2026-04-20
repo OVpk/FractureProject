@@ -5930,6 +5930,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1278198180}
     - target: {fileID: 4212833876203847845, guid: f1596f91786fe2c42ab6775391cc8cea, type: 3}
+      propertyPath: moveSpeed
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4212833876203847845, guid: f1596f91786fe2c42ab6775391cc8cea, type: 3}
       propertyPath: transformA
       value: 
       objectReference: {fileID: 177141354}
@@ -5944,6 +5948,10 @@ PrefabInstance:
     - target: {fileID: 4212833876203847845, guid: f1596f91786fe2c42ab6775391cc8cea, type: 3}
       propertyPath: acceleration
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4212833876203847845, guid: f1596f91786fe2c42ab6775391cc8cea, type: 3}
+      propertyPath: characterCount
+      value: 30
       objectReference: {fileID: 0}
     - target: {fileID: 7700269224792031573, guid: f1596f91786fe2c42ab6775391cc8cea, type: 3}
       propertyPath: m_Name
