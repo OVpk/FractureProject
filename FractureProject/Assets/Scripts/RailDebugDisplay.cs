@@ -64,21 +64,49 @@ public class RailDebugDisplay : MonoBehaviour
             {
                 GizmosRuntimeCustom.DrawSphere(node.position, nodeSize);
             }
-
-            if (node.nextNode != null)
+            
+            if (node is ExitCrowdNode) continue;
+            
+            CrowdNode targetNode = node.nextNode;
+            if (node is StopCrowdNode stopNode) targetNode = stopNode.GetHiddenNode();
+            if (node is SwitchCrowdNode switchNode)
             {
-                if (node.state == CrowdState.Empty)
+                targetNode = switchNode.GetHiddenNode();
+                foreach (CrowdNode linkedOrigin in switchNode.nextOriginNodes)
                 {
-                    GizmosRuntimeCustom.color = new Color(0.5f, 0.5f, 0.5f, 0.3f);
+                    DrawSegment(node, linkedOrigin);
                 }
-                else
-                {
-                    GizmosRuntimeCustom.color = currentColor;
-                }
-
-                DrawLineWithArrow(node.position, node.nextNode.position);
             }
+            
+            DrawSegment(node, targetNode);
         }
+    }
+
+    private void DrawSegment(CrowdNode startNode, CrowdNode targetNode)
+    {
+        if (targetNode == null) return;
+        
+        Color currentColor = Color.gray;
+            
+        if (targetNode.state == CrowdState.Flowing)
+        {
+            currentColor = Color.green;
+        }
+        else if (targetNode.state == CrowdState.Stagnant)
+        {
+            currentColor = Color.red;
+        }
+            
+        if (targetNode.state == CrowdState.Empty)
+        {
+            GizmosRuntimeCustom.color = new Color(0.5f, 0.5f, 0.5f, 0.3f);
+        }
+        else
+        {
+            GizmosRuntimeCustom.color = currentColor;
+        }
+
+        DrawLineWithArrow(startNode.position, targetNode.position);
     }
     
     private void DrawLineWithArrow(Vector3 start, Vector3 end)

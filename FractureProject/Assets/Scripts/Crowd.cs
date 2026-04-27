@@ -62,6 +62,8 @@ public class Crowd : MonoBehaviour
         if (nodeIndex >= origin.childCount) return null;
         
         Transform nodeObject = origin.GetChild(nodeIndex);
+        
+        StateDebugForNode stateDebugger = nodeObject.GetComponent<StateDebugForNode>(); //FULL DEBUG
 
         if (nodeObject.childCount > 0)
         {
@@ -74,7 +76,8 @@ public class Crowd : MonoBehaviour
                     nodeObject.position, 
                     GenerateNodeByChildren(origin, nodeIndex+1), 
                     nextOriginNodes,
-                    allNodesSet
+                    allNodesSet,
+                    stateDebugger
                     );
             
             SwitchNodeEvent eventLinked = nodeObject.GetComponent<SwitchNodeEvent>();
@@ -107,14 +110,15 @@ public class Crowd : MonoBehaviour
             StopCrowdNode stopNode = new StopCrowdNode(
                 nodeObject.position, 
                 GenerateNodeByChildren(origin, nodeIndex + 1),
-                allNodesSet
+                allNodesSet,
+                stateDebugger
             );
         
             stopEvent.Bind(stopNode, this);
             return stopNode;
         }
 
-        return new CrowdNode(nodeObject.position, GenerateNodeByChildren(origin, nodeIndex+1), allNodesSet);
+        return new CrowdNode(nodeObject.position, GenerateNodeByChildren(origin, nodeIndex+1), allNodesSet, stateDebugger);
     }
     
     
