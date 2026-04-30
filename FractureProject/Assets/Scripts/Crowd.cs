@@ -34,9 +34,11 @@ public class Crowd : MonoBehaviour
 
     private CrowdNode CreateNewBranch(Transform newBranchOrigin)
     {
+        INodeStateListener stateListener = newBranchOrigin.GetComponent<INodeStateListener>();
+        
         if (newBranchOrigin.childCount == 0)
         {
-            return new ExitCrowdNode(newBranchOrigin.position, null, allNodesSet);
+            return new ExitCrowdNode(newBranchOrigin.position, null, allNodesSet, stateListener);
         }
         
         IntermediateExitFlag intermediateExit = newBranchOrigin.GetComponent<IntermediateExitFlag>();
@@ -53,7 +55,8 @@ public class Crowd : MonoBehaviour
         return new CrowdNode(
             newBranchOrigin.position,
             GenerateNodeByChildren(newBranchOrigin),
-            allNodesSet
+            allNodesSet,
+            stateListener
         );
     }
     
@@ -63,7 +66,7 @@ public class Crowd : MonoBehaviour
         
         Transform nodeObject = origin.GetChild(nodeIndex);
         
-        StateDebugForNode stateDebugger = nodeObject.GetComponent<StateDebugForNode>(); //FULL DEBUG
+        INodeStateListener stateListener = nodeObject.GetComponent<INodeStateListener>();
 
         if (nodeObject.childCount > 0)
         {
@@ -77,7 +80,7 @@ public class Crowd : MonoBehaviour
                     GenerateNodeByChildren(origin, nodeIndex+1), 
                     nextOriginNodes,
                     allNodesSet,
-                    stateDebugger
+                    stateListener
                     );
             
             SwitchNodeEvent eventLinked = nodeObject.GetComponent<SwitchNodeEvent>();
@@ -90,7 +93,7 @@ public class Crowd : MonoBehaviour
         }
         
         if (nodeIndex == origin.childCount - 1) {
-            return new ExitCrowdNode(nodeObject.position, null, allNodesSet);
+            return new ExitCrowdNode(nodeObject.position, null, allNodesSet, stateListener);
         }
         
         IntermediateExitFlag intermediateExit = nodeObject.GetComponent<IntermediateExitFlag>();
@@ -111,14 +114,14 @@ public class Crowd : MonoBehaviour
                 nodeObject.position, 
                 GenerateNodeByChildren(origin, nodeIndex + 1),
                 allNodesSet,
-                stateDebugger
+                stateListener
             );
         
             stopEvent.Bind(stopNode, this);
             return stopNode;
         }
 
-        return new CrowdNode(nodeObject.position, GenerateNodeByChildren(origin, nodeIndex+1), allNodesSet, stateDebugger);
+        return new CrowdNode(nodeObject.position, GenerateNodeByChildren(origin, nodeIndex+1), allNodesSet, stateListener);
     }
     
     

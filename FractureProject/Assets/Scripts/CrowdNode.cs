@@ -12,18 +12,30 @@ public class CrowdNode
 {
     public virtual CrowdNode nextNode { get; private set; }
     public Vector3 position;
+
+    private CrowdState _state;
+    public CrowdState state
+    {
+        get => this._state;
+        set
+        {
+            this._state = value;
+            listener?.OnStateChange();
+        }
+    }
+    private INodeStateListener listener;
     
-    public CrowdState state = CrowdState.Empty;
     public bool isConnectedToSource = false;
 
-    public CrowdNode(Vector3 position, CrowdNode nextNode, HashSet<CrowdNode> track = null, StateDebugForNode stateDebugger = null)
+    public CrowdNode(Vector3 position, CrowdNode nextNode, HashSet<CrowdNode> track = null, INodeStateListener stateListener = null)
     {
         this.position = position;
         this.nextNode = nextNode;
         
         track?.Add(this);
         
-        stateDebugger?.Bind(this); //FULL DEBUG
+        stateListener?.ListenNode(this);
+        listener = stateListener;
     }
     
     public bool IsPathValid()
@@ -64,6 +76,8 @@ public class CrowdNode
             }
         }
     }
+
+    public void DisconnectListener() => listener = null;
 }
 
 public class SwitchCrowdNode : CrowdNode
@@ -82,8 +96,8 @@ public class SwitchCrowdNode : CrowdNode
         }
     }
     
-    public SwitchCrowdNode(Vector3 position, CrowdNode nextNode, CrowdNode[] nextOriginNodes, HashSet<CrowdNode> track = null, StateDebugForNode stateDebugger = null) 
-        : base(position, nextNode, track, stateDebugger)
+    public SwitchCrowdNode(Vector3 position, CrowdNode nextNode, CrowdNode[] nextOriginNodes, HashSet<CrowdNode> track = null, INodeStateListener stateListener = null) 
+        : base(position, nextNode, track, stateListener)
     {
         this.nextOriginNodes = nextOriginNodes;
     }
@@ -115,8 +129,8 @@ public class SwitchCrowdNode : CrowdNode
 
 public class ExitCrowdNode : CrowdNode
 {
-    public ExitCrowdNode(Vector3 position, CrowdNode nextNode, HashSet<CrowdNode> track = null) 
-        : base(position, nextNode, track) { }
+    public ExitCrowdNode(Vector3 position, CrowdNode nextNode, HashSet<CrowdNode> track = null, INodeStateListener stateListener = null) 
+        : base(position, nextNode, track, stateListener) { }
 }
 
 public class StopCrowdNode : CrowdNode
@@ -125,8 +139,8 @@ public class StopCrowdNode : CrowdNode
 
     public bool isStopped = false;
     
-    public StopCrowdNode(Vector3 position, CrowdNode nextNode, HashSet<CrowdNode> track = null, StateDebugForNode stateDebugger = null) 
-        : base(position, nextNode, track, stateDebugger) { }
+    public StopCrowdNode(Vector3 position, CrowdNode nextNode, HashSet<CrowdNode> track = null, INodeStateListener stateListener = null) 
+        : base(position, nextNode, track, stateListener) { }
 
     public CrowdNode GetHiddenNode() => base.nextNode;
 }
