@@ -18,7 +18,8 @@ public class Player : MonoBehaviour
         Transported,
         Ejected,
         Pushing, //Nico
-        Attacking
+        Attacking,
+        Hit
     }
     
     public States currentState = States.Idle;
@@ -83,7 +84,7 @@ public class Player : MonoBehaviour
             lastFacingDirection = Quaternion.Euler(0, 45, 0) * snappedInput;
         }
         
-        if (currentState != States.Transported && currentState != States.Ejected && currentState != States.Pushing && currentState != States.Attacking)
+        if (currentState != States.Transported && currentState != States.Ejected && currentState != States.Pushing && currentState != States.Attacking && currentState != States.Hit)
         {
             ChangeState(direction.magnitude > 0.1f ? States.Walking : States.Idle);
         }
@@ -134,6 +135,9 @@ public class Player : MonoBehaviour
         {
             case States.Idle:
             case States.Attacking:
+                rb.linearVelocity = new Vector3(0, rb.linearVelocity.y, 0); 
+                break;
+            case States.Hit:
                 rb.linearVelocity = new Vector3(0, rb.linearVelocity.y, 0); 
                 break;
             case States.Walking: 

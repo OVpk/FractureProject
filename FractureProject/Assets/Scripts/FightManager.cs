@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class FightManager : MonoBehaviour
 {
-    public Transform player;
+    [HideInInspector] public Transform player;
     
     [Header("zones")]
     public float innerRadius = 3f;  
@@ -24,6 +24,8 @@ public class FightManager : MonoBehaviour
 
     void Start()
     {
+        player = Player.instance.transform;
+        
         foreach (EnemyController enemy in aliveEnemies)
         {
             enemy.Setup(this);
