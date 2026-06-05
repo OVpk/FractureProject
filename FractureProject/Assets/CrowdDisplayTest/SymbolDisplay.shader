@@ -11,7 +11,7 @@ Shader "Custom/SymbolDisplay"
         
         [Header(Generation Settings)]
         _Density ("Densité des symboles", Range(0.0, 1.0)) = 1.0
-        // --- NOUVEAU PARAMÈTRE ICI ---
+
         _Jitter ("Désordre d'espacement (Jitter)", Float) = 1.5
         
         [Header(Animation Settings)]
@@ -82,7 +82,9 @@ Shader "Custom/SymbolDisplay"
                 float _RotationY;
                 
                 float _Density; 
-                float _Jitter; // <-- DÉCLARATION DU PARAMÈTRE
+                float _Jitter;
+
+                float _ResumeTime;
                 
                 float _CycleDuration;
                 float _RiseDuration;
@@ -114,10 +116,12 @@ Shader "Custom/SymbolDisplay"
                 
                 float activeDuration = _RiseDuration + _HoldDuration + _FadeDuration;
 
+                float globalCycleStart = _Time.y - timeInCycle;
+
                 float2 seed = float2((float)instanceID, cycleIndex);
                 float randomDensity = rand(seed + float2(1.1, 2.2));
 
-                if (randomDensity > _Density || timeInCycle > activeDuration || data.uvRect.z == 0.0)
+                if (randomDensity > _Density || timeInCycle > activeDuration || data.uvRect.z == 0.0 || globalCycleStart < _ResumeTime)
                 {
                     output.positionCS = float4(0, 0, 0, 0);
                     output.uv = float2(0, 0);
@@ -125,29 +129,23 @@ Shader "Custom/SymbolDisplay"
                     return output;
                 }
 
-                // --- RÉPARTITION ANTI-SUPERPOSITION ---
-                
-                // 1. Placement sur la longueur (Utilisation du Nombre d'Or pour espacer)
-                float cycleOffset = rand(float2(cycleIndex, 99.99)); // Fait tourner les positions à chaque cycle
+
+                float cycleOffset = rand(float2(cycleIndex, 99.99));
                 float goldenRatio = 0.61803398875;
                 float uniformProgress = frac((float)instanceID * goldenRatio + cycleOffset);
                 float baseTargetDistance = uniformProgress * _TotalPathLength; 
                 
-                // Ajout du Jitter (Désordre) pour que ça paraisse naturel
                 float distJitter = (rand(seed + float2(3.3, 4.4)) - 0.5) * _Jitter;
                 float targetDistance = clamp(baseTargetDistance + distJitter, 0.0, _TotalPathLength);
                 
-                // 2. Placement sur la largeur (Alternance gauche / droite)
-                float sideSign = (instanceID % 2 == 0) ? 1.0 : -1.0; // Pair = Droite, Impair = Gauche
+                float sideSign = (instanceID % 2 == 0) ? 1.0 : -1.0;
                 float randomLatFactor = rand(seed + float2(5.5, 6.6));
-                // Dispersion aléatoire mais forcée d'un côté précis pour éviter les croisements au centre
+
                 float lateralOffsetDist = sideSign * lerp(0.1, 1.0, randomLatFactor) * _Width; 
                 
-                // 3. Hauteur aléatoire
                 float randomHeightFactor = rand(seed + float2(7.7, 8.8));
                 float baseHeight = lerp(1.5, 3.0, randomHeightFactor); 
 
-                // --- FIN RÉPARTITION ---
 
                 float heightProgress = saturate(timeInCycle / max(0.001, _RiseDuration));
                 

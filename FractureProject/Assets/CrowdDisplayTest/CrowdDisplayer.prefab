@@ -60,3 +60,4 @@ MonoBehaviour:
   symbolMesh: {fileID: 10210, guid: 0000000000000000e000000000000000, type: 0}
   symbolMaterialTemplate: {fileID: 2100000, guid: 24f6cc4624ad22346bc5c31655e1bba7, type: 2}
   symbolCount: 50
+  symbolJoyAtlas: {fileID: 4343727234628468602, guid: d3037ea939e6ece4baaf78c7b7753547, type: 2}
