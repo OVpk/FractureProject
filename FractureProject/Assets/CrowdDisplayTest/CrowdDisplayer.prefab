@@ -56,3 +56,7 @@ MonoBehaviour:
   dispersionDuration: 1
   dispersionDistance: 5
   densitySmoothSpeed: 10
+  symbolAtlas: {fileID: 4343727234628468602, guid: c360004c013ed3040ac0e7fd54865c0d, type: 2}
+  symbolMesh: {fileID: 10210, guid: 0000000000000000e000000000000000, type: 0}
+  symbolMaterialTemplate: {fileID: 2100000, guid: 24f6cc4624ad22346bc5c31655e1bba7, type: 2}
+  symbolCount: 50

@@ -8,6 +8,12 @@ public class CrowdDisplayer : MonoBehaviour
         public float absoluteDistance;
         public Vector4 uvRect;
     }
+    
+    public struct SymbolData {
+        public Vector3 randomOffset; 
+        public float absoluteDistance;
+        public Vector4 uvRect;
+    }
 
     public Crowd targetCrowd; 
     public SpriteAtlas atlas;
@@ -26,6 +32,17 @@ public class CrowdDisplayer : MonoBehaviour
 
     [Header("Density Smoothing")]
     public float densitySmoothSpeed = 1f;
+    
+    [Header("Symbol Settings")]
+    public SpriteAtlas symbolAtlas;
+    public Mesh symbolMesh;
+    public Material symbolMaterialTemplate;
+    public int symbolCount = 20;
+
+    private ComputeBuffer symbolBuffer;
+    private ComputeBuffer symbolArgsBuffer;
+    private Material runtimeSymbolMaterial;
+    private SymbolData[] symbolCpuData;
     
     private float[] targetDistances;
     private bool isSmoothingDensity = false;
@@ -47,6 +64,9 @@ public class CrowdDisplayer : MonoBehaviour
     private float currentPathLength = 0f; 
     private CharacterData[] cpuData;
     private bool hasStartedLooping = false;
+    
+    private MaterialPropertyBlock symbolPropertyBlock;
+    
 
     void Start()
     {
@@ -102,6 +122,50 @@ public class CrowdDisplayer : MonoBehaviour
             {
                 propertyBlock.SetTexture("_MainTex", characters[0].texture);
                 runtimeMaterial.SetTexture("_MainTex", characters[0].texture);
+            }
+        }
+        
+        // --- INITIALISATION DES SYMBOLES ---
+        if (symbolMaterialTemplate != null && symbolAtlas != null && symbolCount > 0)
+        {
+            Sprite[] symbolSprites = new Sprite[symbolAtlas.spriteCount]; 
+            symbolAtlas.GetSprites(symbolSprites);
+    
+            symbolCpuData = new SymbolData[symbolCount];
+            float symbolSpacing = initialLength / Mathf.Max(1, symbolCount);
+
+            for (int i = 0; i < symbolCount; i++)
+            {
+                Sprite s = symbolSprites[Random.Range(0, symbolSprites.Length)];
+                Rect r = s.textureRect;
+        
+                symbolCpuData[i] = new SymbolData {
+                    randomOffset = new Vector3(Random.Range(-1f, 1f), Random.Range(1.5f, 3f), Random.Range(0f, 100f)),
+                    absoluteDistance = (i * symbolSpacing) + Random.Range(-symbolSpacing * 0.2f, symbolSpacing * 0.2f),
+                    uvRect = new Vector4(r.x / s.texture.width, r.y / s.texture.height, r.width / s.texture.width, r.height / s.texture.height)
+                };
+            }
+
+            symbolBuffer = new ComputeBuffer(symbolCount, 32);
+            symbolBuffer.SetData(symbolCpuData);
+
+            symbolArgsBuffer = new ComputeBuffer(1, 5 * sizeof(uint), ComputeBufferType.IndirectArguments);
+            symbolArgsBuffer.SetData(new uint[5] { symbolMesh.GetIndexCount(0), (uint)symbolCount, 0, 0, 0 });
+
+            // ---> C'EST ICI QU'ON CRÉE LE PROPERTY BLOCK POUR VULKAN <---
+            symbolPropertyBlock = new MaterialPropertyBlock();
+            symbolPropertyBlock.SetBuffer("_SymbolBuffer", symbolBuffer);
+            symbolPropertyBlock.SetBuffer("_WaypointBuffer", waypointBuffer);
+            symbolPropertyBlock.SetFloat("_RotationY", characterRotationY);
+
+            runtimeSymbolMaterial = new Material(symbolMaterialTemplate);
+            runtimeSymbolMaterial.SetBuffer("_SymbolBuffer", symbolBuffer);
+            runtimeSymbolMaterial.SetBuffer("_WaypointBuffer", waypointBuffer);
+    
+            if (symbolSprites.Length > 0 && symbolSprites[0] != null) 
+            {
+                runtimeSymbolMaterial.SetTexture("_MainTex", symbolSprites[0].texture);
+                symbolPropertyBlock.SetTexture("_MainTex", symbolSprites[0].texture); // On l'assure aussi dans le bloc
             }
         }
     }
@@ -310,6 +374,44 @@ public class CrowdDisplayer : MonoBehaviour
         propertyBlock.SetFloat("_GlobalOffset", globalOffset);
         
         Graphics.DrawMeshInstancedIndirect(characterMesh, 0, runtimeMaterial, new Bounds(Vector3.zero, Vector3.one * 1000), argsBuffer, 0, propertyBlock);
+        
+        // (À la toute fin de ta fonction Update)
+        
+#if UNITY_EDITOR
+        if (runtimeSymbolMaterial != null && symbolMaterialTemplate != null && symbolBuffer != null)
+        {
+            // 1. On sauvegarde la texture actuelle (définie au Start)
+            Texture currentTex = runtimeSymbolMaterial.GetTexture("_MainTex");
+            
+            // 2. On aspire toutes les modifications faites en direct dans l'Inspecteur
+            runtimeSymbolMaterial.CopyPropertiesFromMaterial(symbolMaterialTemplate);
+            
+            // 3. On réinjecte la texture et les buffers (car l'étape 2 les écrase)
+            if (currentTex != null) runtimeSymbolMaterial.SetTexture("_MainTex", currentTex);
+            runtimeSymbolMaterial.SetBuffer("_SymbolBuffer", symbolBuffer);
+            runtimeSymbolMaterial.SetBuffer("_WaypointBuffer", waypointBuffer);
+        }
+#endif
+        
+    
+        // --- RENDU DES SYMBOLES ---
+        if (runtimeSymbolMaterial != null && symbolArgsBuffer != null && symbolPropertyBlock != null)
+        {
+            // On met à jour les paramètres dynamiques dans le PropertyBlock des symboles !
+            symbolPropertyBlock.SetInt("_WaypointCount", currentWaypointCount);
+            symbolPropertyBlock.SetFloat("_TotalPathLength", currentPathLength);
+    
+            // On passe notre symbolPropertyBlock à la place du "null"
+            Graphics.DrawMeshInstancedIndirect(
+                symbolMesh, 
+                0, 
+                runtimeSymbolMaterial, 
+                new Bounds(Vector3.zero, Vector3.one * 1000), 
+                symbolArgsBuffer, 
+                0, 
+                symbolPropertyBlock
+            );
+        }
     }
     
     void RescaleAbsoluteDistances(float oldLength, float cutLength, float trueNewLength)
@@ -399,5 +501,9 @@ public class CrowdDisplayer : MonoBehaviour
             Destroy(runtimeMaterial);
             runtimeMaterial = null;
         }
+        
+        if (symbolBuffer != null) symbolBuffer.Release();
+        if (symbolArgsBuffer != null) symbolArgsBuffer.Release();
+        if (runtimeSymbolMaterial != null) { Destroy(runtimeSymbolMaterial); runtimeSymbolMaterial = null; }
     }
 }

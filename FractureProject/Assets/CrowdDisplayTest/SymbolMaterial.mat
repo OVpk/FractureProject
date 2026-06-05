@@ -7,8 +7,8 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: CrowdMaterialTesst
-  m_Shader: {fileID: 4800000, guid: 0bee4f369d2d7d247b8196a2dfb79c37, type: 3}
+  m_Name: SymbolMaterial
+  m_Shader: {fileID: 4800000, guid: 81008a62c26be0f42a5eefffe12caba6, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -29,13 +29,22 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _BounceAmp: 0.3
-    - _BounceSpeed: 3
-    - _DispersionDistance: 5
-    - _DispersionProgress: 0
-    - _RotationY: 0
-    - _Width: 3
+    - _BaseYOffset: -4
+    - _CycleDuration: 7
+    - _Density: 0.5
+    - _DepthBias: 4
+    - _FadeDuration: 0.3
+    - _FloatHeight: 4
+    - _HoldDuration: 6
+    - _Lifetime: 1.5
+    - _PulseAmplitude: 0.2
+    - _PulseDelay: 0.1
+    - _PulseFrequency: 6
+    - _RiseDuration: 0
+    - _RotationY: -45
+    - _ScaleRiseDuration: 0.3
+    - _Width: 2.5
     m_Colors:
-    - _Scale: {r: 3, g: 5, b: 0, a: 0}
+    - _Scale: {r: 2, g: 2, b: 0, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
